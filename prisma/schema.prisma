@@ -1,0 +1,236 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// // Instructor model
+// // The Instructor model has a one-to-many relationship with Course
+// model Instructor {
+//   id             Int      @id @default(autoincrement())
+//   instructorName String
+//   courses        Course[]
+
+//   role Role @default(STUDENT)
+// }
+
+// // Student model
+// // The Student model has a one-to-many relationship with Comment, and Review.
+// // and a many-to-many relationship with CoursesStudents
+// model Student {
+//   id              Int               @id @default(autoincrement())
+//   studentName     String
+//   gender          Gender
+//   enrolledCourses CoursesStudents[]
+//   comments        Comment[]
+//   reviews         Review[]
+
+//   role Role @default(INSTRUCTOR)
+// }
+
+// // Course model
+// // The Course model has a many-to-one relationship with Instructor
+// // and a many-to-many relationship with CoursesStudents.
+// // It also has a one-to-many relationship with Comment and Review.
+// model Course {
+//   id         Int     @id @default(autoincrement())
+//   courseName String
+//   details    String?
+//   rate       Float   @default(0)
+//   likes      Int     @default(0)
+
+//   instructorId Int
+//   instructor   Instructor @relation(fields: [instructorId], references: [id])
+
+//   enrolledStudents CoursesStudents[]
+//   comments         Comment[]
+//   reviews          Review[]
+// }
+
+// // CoursesStudents model for the many-to-many relationship between Course and Student
+// model CoursesStudents {
+//   courseId  Int
+//   studentId Int
+//   course    Course  @relation(fields: [courseId], references: [id])
+//   student   Student @relation(fields: [studentId], references: [id])
+
+//   @@id([courseId, studentId])
+// }
+
+// // Comment model for the comments made by students on courses
+// // It has a many-to-one relationship with Course and Student.
+// model Comment {
+//   id      Int     @id @default(autoincrement())
+//   comment String?
+//   likes   Int     @default(0)
+
+//   courseId Int
+//   course   Course @relation(fields: [courseId], references: [id])
+
+//   studentId Int
+//   student   Student @relation(fields: [studentId], references: [id])
+// }
+
+// // Review model for the reviews made by students on courses
+// // It has a many-to-one relationship with Course and Student, and includes a rating field to represent the rating given to the course by the student.
+// model Review {
+//   id     Int     @id @default(autoincrement())
+//   rating Float
+//   text   String?
+
+//   courseId Int
+//   course   Course @relation(fields: [courseId], references: [id])
+
+//   studentId Int
+//   student   Student @relation(fields: [studentId], references: [id])
+// }
+
+// enum Gender {
+//   Male
+//   FEMALE
+// }
+
+// enum Role {
+//   STUDENT
+//   INSTRUCTOR
+// }
+
+// Define roles
+enum Role {
+  STUDENT
+  INSTRUCTOR
+}
+
+// User model with role field
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  role     Role   @default(STUDENT)
+
+  // Instructor-Course / One-to-many
+  // Instructor Could teach many courses
+  instructorCourses Course[] @relation(name: "instructorCourses")
+
+  // if the user is STUDENT, the user could  enrolle  in a list of courses
+  // studentCourses Course[] @relation(name: "enrollments")
+
+  // Student-Course / Many-to-many
+  enrollments Enrollment[] 
+
+
+  likedCourses Course[] @relation("LikedCourses")
+
+  reviews Review[]
+  comments Comment[]
+}
+
+// Course model with owner field
+model Course {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+
+  instructorId Int
+  instructor   User @relation(name: "instructorCourses", fields: [instructorId], references: [id])
+
+  // students     User[]   @relation(name: "enrollments")
+  
+  rate       Float        @default(0)
+  likes      Int          @default(0)
+
+  enrollments Enrollment[]
+
+  likedBy     User[]  @relation("LikedCourses")
+
+  reviews Review[]
+  comments Comment[]
+}
+
+model Enrollment {
+  courseId  Int
+  studentId Int
+  course    Course @relation(fields: [courseId], references: [id])
+  student   User   @relation(fields: [studentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  enrolled  Boolean @default(false)
+
+  @@id([courseId, studentId])
+}
+
+model Review {
+  id     Int     @id @default(autoincrement())
+  rating Float
+  text   String?
+
+  courseId Int
+  course   Course @relation(fields: [courseId], references: [id])
+
+  studentId Int
+  student   User @relation(fields: [studentId], references: [id])
+}
+
+model Comment {
+  id      Int     @id @default(autoincrement())
+  comment String?
+  likes   Int     @default(0)
+
+  courseId Int
+  course   Course @relation(fields: [courseId], references: [id])
+
+  studentId Int
+  student   User @relation(fields: [studentId], references: [id])
+}
+
+
+
+
+// The @relation attribute in Prisma is used to specify the relationships between different models in the database schema. It allows you to define the name of the relation, the fields on both models that the relation connects, and other options.
+
+// In your case, the @relation attribute is used to define the relationships between the User, Course, and Enrollment models. The name argument is used to give a custom name to the relation, which can be useful when you have multiple relations between the same models. The name is optional and if not provided, Prisma will generate a default name for the relation.
+
+// For example, in the User model, the courses field has a relation named "instructorCourses", which connects the User model to the Course model through the instructorId field. This relation specifies that the User model is the instructor for the Course model, and it is named "instructorCourses".
+
+// Similarly, in the Course model, the instructor field has a relation named "instructorCourses", which connects the Course model to the User model through the instructorId field. This relation specifies that the User model is the instructor for the Course model, and it is named "instructorCourses".
+
+// In the Course model, the students field has a relation named "enrollments", which connects the Course model to the User model through the Enrollment model. This relation specifies that the User model is enrolled in the Course model, and it is named "enrollments".
+
+// Finally, in the User model, the studentCourses field has a relation named "enrollments", which connects the User model to the Course model through the Enrollment model. This relation specifies that the User model is enrolled in the Course model, and it is named "enrollments".
+
+// In summary, the name argument in the @relation attribute allows you to give a custom name to the relation between two models. This can be useful when you have multiple relations between the same models, or when you want to give a more descriptive name to the relation.
+
+// model Author {
+//   id    Int     @id @default(autoincrement())
+//   name  String
+
+//   books Book[] @relation(name: "AuthorToBooks")
+// }
+
+// model Book {
+//   id        Int     @id @default(autoincrement())
+//   title     String
+//   authorId  Int
+//   author    Author  @relation(fields: [authorId], references: [id], name: "AuthorToBooks")
+// }
+
+// model Author2 {
+//   id    Int     @id @default(autoincrement())
+//   name  String
+//   books Book2[]
+// }
+
+// model Book2 {
+//   id        Int     @id @default(autoincrement())
+//   title     String
+
+//   authorId  Int
+//   author    Author2  @relation(fields: [authorId], references: [id])
+// }
