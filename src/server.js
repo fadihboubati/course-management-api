@@ -25,7 +25,7 @@ const prisma = new PrismaClient();
 //  ----- Routes -----  //
 app.use('/', homeRoute);
 
-
+// completed
 app.post('/admin/createInstructor', async (req, res) => {
     const { username } = req.body;
 
@@ -39,6 +39,7 @@ app.post('/admin/createInstructor', async (req, res) => {
     res.status(200).send(user);
 });
 
+// completed
 app.get('/admin/createStudent', async (req, res) => {
     const { username } = req.body;
 
