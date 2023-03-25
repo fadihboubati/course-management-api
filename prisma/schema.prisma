@@ -188,6 +188,9 @@ model Comment {
 
   studentId Int
   student   User @relation(fields: [studentId], references: [id])
+
+
+  deleted Boolean @default(false)
 }
 
 
