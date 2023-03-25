@@ -36,7 +36,7 @@ app.post('/admin/createInstructor', async (req, res) => {
         },
     });
 
-    res.status(200).send(user);
+    res.status(201).send(user);
 });
 
 // completed
@@ -49,7 +49,7 @@ app.get('/admin/createStudent', async (req, res) => {
         },
     });
 
-    res.status(200).send(user);
+    res.status(201).send(user);
 });
 
 // =================================================== 
@@ -84,7 +84,7 @@ app.post('/student/enroll', async (req, res) => {
             enrolled: true,
         },
     });
-    res.status(200).send(enrolled);
+    res.status(201).send(enrolled);
 });
 
 // app.put('/student/enroll', bearerAuthMiddleware, aclMiddleware("student"), async (req, res) => {
@@ -175,20 +175,29 @@ app.post('/courses/:id/like', async (req, res) => {
     res.json(updatedCourse);
 });
 
-// WIP(work in progress)
-app.post('/course/:id/comments', async (req, res) => {
-    // its not a real token, its the user id, but I will assume its a token for authorization purpose
-    const basicHeaderParts = req.headers.authorization.split(' ');
-    const token = basicHeaderParts[1];
-    const user = await prisma.user.findUnique({
-        where: { username: token },
+// completed
+app.post('/course/:id/comments', bearerAuthMiddleware, aclMiddleware('STUDENT'), async (req, res) => {
+
+    const courseId = Number(req.params.id);
+    const course = await prisma.course.findUnique({
+        where: { id: courseId }
     });
-    if (user.role !== 'STUDENT') {
-        res.status(401).send('Unauthorized');
-    }
+    const userId = req.user.id;
+
+    const text = req.body.comment;
+    const comment = await prisma.comment.create({
+        data: {
+            comment: text,
+            courseId: course.id,
+            studentId: userId,
+        }
+    })
+
+    res.json(comment);
+
 })
 
-// not completed
+// WIP(work in progress)
 app.get('/courses/:id1/comment/:id2/like', async (req, res) => {
     // its not a real token, its the user id, but I will assume its a token for authorization purpose
     const basicHeaderParts = req.headers.authorization.split(' ');
