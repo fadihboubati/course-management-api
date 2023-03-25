@@ -13,18 +13,26 @@ module.exports = async function (req, res, next) {
             return;
         }
 
-        // its not a real token, its the user id, but I will assume its a token for authorization purpose
+        // its not a real token, its the username, but I will assume its a token for authorization purpose
         const basicHeaderParts = req.headers.authorization.split(' ');
         const token = basicHeaderParts[1];
-        const user = await prisma.user.findUnique({
-            where: { username: token },
-        });
 
+        // parsed and verify the token
+        // const parsedToken = jwt.verify(token, process.env.PRIVATEKEY); // raise an error if not verify
+        // ...
+        const parsedToken = token;
+
+
+        let username = parsedToken
+        const user = await prisma.user.findUnique({
+            where: { username: username },
+        });
         if (user) {
-            req.user = userInfo
-            next();
+            req.user = user
+            return next();
+
         }
-        next('Invalid Token');
+        next('Invalid Token or User Not Found');
 
     } catch (error) {
         next(DEVMODE ? error.message : 'Ops, Something wrong during singing up process');
