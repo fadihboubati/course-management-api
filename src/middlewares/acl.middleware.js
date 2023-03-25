@@ -2,11 +2,11 @@
 require('dotenv').config();
 const DEVMODE = process.env.DEVMODE;
 
-module.exports = (capability) => (req, res, next) => {
+module.exports = (role) => (req, res, next) => {
     try {
 
         // We already add the user property in the bearer middlewares
-        if (req.user.capabilities.includes(capability)) {
+        if (req.user.role === role) {
             return next();
         }
         next('Access Denied');
