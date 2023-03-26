@@ -232,6 +232,10 @@ app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDEN
     res.status(200).send(comment);
 });
 
+// not completer
+app.post('/comment/:commentId/removeLike', bearerAuthMiddleware, aclMiddleware('STUDENT')), async (req, res) => {
+}
+
 // not completed
 app.get('createReview', (req, res) => {
     res.send('created');
