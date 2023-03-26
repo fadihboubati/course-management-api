@@ -166,6 +166,7 @@ app.post('/courses/:id/like', async (req, res) => {
         data: {
             likedBy: {
                 connect: { id: userId }
+                // disconnect : {id: userId}
             },
             likes: course.likes + 1
         }
@@ -197,18 +198,38 @@ app.post('/course/:id/comments', bearerAuthMiddleware, aclMiddleware('STUDENT'),
 
 })
 
-// WIP(work in progress)
-app.get('/courses/:id1/comment/:id2/like', async (req, res) => {
-    // its not a real token, its the user id, but I will assume its a token for authorization purpose
-    const basicHeaderParts = req.headers.authorization.split(' ');
-    const token = basicHeaderParts[1];
-    const user = await prisma.user.findUnique({
-        where: { id: token },
-    });
-    if (user.role !== 'STUDENT') {
-        res.status(401).send('Unauthorized');
+// WIP(work in progress) : done, need just to check the if the comment is already liked functionality 
+app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDENT'), async (req, res) => {
+    const userId = req.user.id
+    const commentId = Number(req.params.commentId);
+
+    const comment = await prisma.comment.findUnique({
+        where: { id: commentId },
+        include: { likedBy: true }
+
+    })
+
+    // ================== Need to double-check
+    // check if the comment is already liked by the user
+    const alreadyLiked = comment.likedBy.some(user => user.id == userId);
+    if (alreadyLiked) {
+        res.status(400).send("User Already liked the course");
     }
-    res.send('liked a comment');
+    // ==================
+
+
+    // get the targets comment & course
+    const updatedComment = await prisma.comment.update({
+        where: { id: commentId },
+        data: {
+            likedBy: {
+                connect: { id: userId }
+            },
+            likes: comment.likes + 1
+        }
+    })
+
+    res.status(200).send(comment);
 });
 
 // not completed
@@ -223,6 +244,8 @@ app.get('createReview', (req, res) => {
 // CRUD course
 // check each course like / comments / review
 // check his rate over all courses
+
+// not completed
 app.get('/instructor/course', async (req, res) => {
 
     // its not a real token, its the user id, but I will assume its a token for authorization purpose
@@ -243,6 +266,7 @@ app.get('/instructor/course', async (req, res) => {
     res.send(course);
 });
 
+// not completed
 app.post('/instructor/Course', async (req, res) => {
     // its not a real token, its the user id, but I will assume its a token for authorization purpose
     const basicHeaderParts = req.headers.authorization.split(' ');
@@ -258,6 +282,7 @@ app.post('/instructor/Course', async (req, res) => {
 
 });
 
+// not completed
 app.delete('/instructor/course', async (req, res) => {
     // its not a real token, its the user id, but I will assume its a token for authorization purpose
     const basicHeaderParts = req.headers.authorization.split(' ');
@@ -272,6 +297,7 @@ app.delete('/instructor/course', async (req, res) => {
     res.send('delete course');
 });
 
+// not completed
 app.put('/instructor/course', async (req, res) => {
     // its not a real token, its the user id, but I will assume its a token for authorization purpose
     const basicHeaderParts = req.headers.authorization.split(' ');
@@ -287,6 +313,8 @@ app.put('/instructor/course', async (req, res) => {
 
 });
 // check each course like / comments / review
+
+// not completed
 app.get('/checkLikes', async (req, res) => {
     // its not a real token, its the user id, but I will assume its a token for authorization purpose
     const basicHeaderParts = req.headers.authorization.split(' ');
@@ -315,6 +343,8 @@ app.get('/checkLikes', async (req, res) => {
 
 });
 
+
+// not completed
 app.get('/instructor/checkComments', async (req, res) => {
     // its not a real token, its the user id, but I will assume its a token for authorization purpose
     const basicHeaderParts = req.headers.authorization.split(' ');
@@ -329,6 +359,7 @@ app.get('/instructor/checkComments', async (req, res) => {
     res.send('checkLikes');
 });
 
+// not completed
 app.get('/instructor/checkReview', async (req, res) => {
     // its not a real token, its the user id, but I will assume its a token for authorization purpose
     const basicHeaderParts = req.headers.authorization.split(' ');

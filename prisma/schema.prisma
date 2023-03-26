@@ -125,6 +125,7 @@ model User {
 
 
   likedCourses Course[] @relation("LikedCourses")
+  likedComments Comment[] @relation("likedComments")
 
   reviews Review[]
   comments Comment[]
@@ -191,6 +192,9 @@ model Comment {
 
 
   deleted Boolean @default(false)
+
+  likedBy User[] @relation("likedComments")
+
 }
 
 
