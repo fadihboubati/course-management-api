@@ -1,13 +1,25 @@
 'use strict';
 
 const express = require('express');
+
 const app = express();
 
+// ===== to improve the security
+// The order of the middleware functions does not necessarily matter in this case, as long as they are called before your routes are defined.
+// However, it's a good practice to call the more critical middleware functions first, and then the less critical ones.
+// In this case, helmet is a more critical security package as it sets various HTTP headers that protect against common attacks,
+// so it's a good idea to call it first.Then, cors is called to set the Cross - Origin Resource Sharing policy.
+
+//1. helmet 
+const helmet = require("helmet");
+app.use(helmet());
+
+// 2 cors
 const cors = require('cors');
 app.use(cors());
 
-app.use(express.json());
 
+app.use(express.json());
 
 const handle404Error = require('./error-handlers/404');
 const handle500Error = require('./error-handlers/500');
@@ -213,8 +225,11 @@ app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDEN
     // check if the comment is already liked by the user
     const alreadyLiked = comment.likedBy.some(user => user.id == userId);
     if (alreadyLiked) {
-        res.status(400).send("User Already liked the course");
+        res.status(400).send('User Already liked the course');
     }
+    res.status(400).send('not work');
+    res.status(400).send('not work');
+
     // ==================
 
 
