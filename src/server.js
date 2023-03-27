@@ -248,7 +248,7 @@ app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDEN
 
     const alreadyLiked = comment.likedBy.some(user => user.id == userId);
     if (alreadyLiked) {
-        res.status(400).send('User Already liked the comment');
+        res.status(400).send({ status: 'error', message: 'User already like the comment' });
     }
 
     // get the targets comment & course
@@ -262,14 +262,42 @@ app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDEN
         }
     })
 
-    res.status(200).send(comment);
+    res.status(200).send({ status: 'success', message: 'Like added successfully' });
 });
 
-// WIP(work in progress)
-app.post('/comment/:commentId/removeLike', bearerAuthMiddleware, aclMiddleware('STUDENT')), async (req, res) => {
-}
+// completed
+app.post('/comment/:commentId/unlike', bearerAuthMiddleware, aclMiddleware('STUDENT'), async (req, res) => {
+    const userId = req.user.id
+    const commentId = Number(req.params.commentId);
 
-// not completed
+    const comment = await prisma.comment.findUnique({
+        where: { id: commentId },
+        include: { likedBy: true }
+
+    })
+
+
+    const alreadyLiked = comment.likedBy.some(user => user.id == userId);
+    if (!alreadyLiked) {
+        res.status(400).send({ status: 'error', message: 'User did not like the comment' });
+    }
+
+    // get the targets comment & course
+    const updatedComment = await prisma.comment.update({
+        where: { id: commentId },
+        data: {
+            likedBy: {
+                disconnect: { id: userId }
+            },
+            likes: comment.likes - 1
+        }
+    })
+
+    res.status(200).send({ status: 'success', message: 'Like removed successfully' });
+
+})
+
+// WIP(work in progress)
 app.get('createReview', (req, res) => {
     res.send('created');
 
