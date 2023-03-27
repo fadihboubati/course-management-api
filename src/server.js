@@ -234,7 +234,7 @@ app.post('/course/:id/comments', bearerAuthMiddleware, aclMiddleware('STUDENT'),
 
 })
 
-// WIP(work in progress) : done, need just to check the if the comment is already liked functionality 
+// completed
 app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDENT'), async (req, res) => {
     const userId = req.user.id
     const commentId = Number(req.params.commentId);
@@ -245,17 +245,11 @@ app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDEN
 
     })
 
-    // ================== Need to double-check
-    // check if the comment is already liked by the user
+
     const alreadyLiked = comment.likedBy.some(user => user.id == userId);
     if (alreadyLiked) {
-        res.status(400).send('User Already liked the course');
+        res.status(400).send('User Already liked the comment');
     }
-    res.status(400).send('not work');
-    res.status(400).send('not work');
-
-    // ==================
-
 
     // get the targets comment & course
     const updatedComment = await prisma.comment.update({
@@ -271,7 +265,7 @@ app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDEN
     res.status(200).send(comment);
 });
 
-// not completer
+// WIP(work in progress)
 app.post('/comment/:commentId/removeLike', bearerAuthMiddleware, aclMiddleware('STUDENT')), async (req, res) => {
 }
 
