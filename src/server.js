@@ -56,7 +56,6 @@ const homeRoute = require('./routes/home.routes');
 const { PrismaClient } = require('@prisma/client');
 const bearerAuthMiddleware = require('./middlewares/bearer-auth.middleware');
 const aclMiddleware = require('./middlewares/acl.middleware');
-const { use } = require('./routes/home.routes');
 const prisma = new PrismaClient();
 //  ----- Routes -----  //
 app.use('/', homeRoute);
