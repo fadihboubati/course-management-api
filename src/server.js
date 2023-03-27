@@ -17,6 +17,30 @@ app.use(helmet());
 // 2 cors
 const cors = require('cors');
 app.use(cors());
+// ===== 
+
+
+//  logger middleware
+const morgan = require("morgan")
+
+// Only development environment
+// const DEVMODE = process.env.NODE_ENV
+if (app.get('env') == "development") {
+    console.log("=== Development Environment ===");
+    app.use(morgan("tiny"))
+}
+
+// Only production environment
+
+// to test and run the code in the production env,
+// stop the server, run the following command in the terminal
+// Linux, mac       : export NODE_ENV=production
+// win cmd          : set NODE_ENV=production
+// win powershell   : $env:NODE_ENV="production"
+// then run again the server
+if (app.get("env") == 'production') {
+    console.log("=== Production Environment ===");
+}
 
 
 app.use(express.json());
