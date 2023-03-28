@@ -22,13 +22,12 @@ module.exports = async function (req, res, next) {
         // ...
         const parsedToken = token;
 
-
-        let username = parsedToken
+        let username = parsedToken;
         const user = await prisma.user.findUnique({
             where: { username: username },
         });
         if (user) {
-            req.user = user
+            req.user = user;
             return next();
 
         }

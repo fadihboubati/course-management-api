@@ -11,7 +11,7 @@ const app = express();
 // so it's a good idea to call it first.Then, cors is called to set the Cross - Origin Resource Sharing policy.
 
 //1. helmet 
-const helmet = require("helmet");
+const helmet = require('helmet');
 app.use(helmet());
 
 // 2 cors
@@ -21,13 +21,13 @@ app.use(cors());
 
 
 //  logger middleware
-const morgan = require("morgan")
+const morgan = require('morgan');
 
 // Only development environment
 // const DEVMODE = process.env.NODE_ENV
-if (app.get('env') == "development") {
-    console.log("=== Development Environment ===");
-    app.use(morgan("tiny"))
+if (app.get('env') == 'development') {
+    console.log('=== Development Environment ===');
+    app.use(morgan('tiny'));
 }
 
 // Only production environment
@@ -38,8 +38,8 @@ if (app.get('env') == "development") {
 // win cmd          : set NODE_ENV=production
 // win powershell   : $env:NODE_ENV="production"
 // then run again the server
-if (app.get("env") == 'production') {
-    console.log("=== Production Environment ===");
+if (app.get('env') == 'production') {
+    console.log('=== Production Environment ===');
 }
 
 
@@ -231,7 +231,7 @@ app.post('/course/:id/comments', bearerAuthMiddleware, aclMiddleware('STUDENT'),
 
     res.json(comment);
 
-})
+});
 
 // completed
 app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDENT'), async (req, res) => {
@@ -266,14 +266,14 @@ app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDEN
 
 // completed
 app.post('/comment/:commentId/unlike', bearerAuthMiddleware, aclMiddleware('STUDENT'), async (req, res) => {
-    const userId = req.user.id
+    const userId = req.user.id;
     const commentId = Number(req.params.commentId);
 
     const comment = await prisma.comment.findUnique({
         where: { id: commentId },
-        include: { likedBy: true }
+        include: { likedBy: true },
 
-    })
+    });
 
 
     const alreadyLiked = comment.likedBy.some(user => user.id == userId);
@@ -282,24 +282,37 @@ app.post('/comment/:commentId/unlike', bearerAuthMiddleware, aclMiddleware('STUD
     }
 
     // get the targets comment & course
-    const updatedComment = await prisma.comment.update({
+    await prisma.comment.update({
         where: { id: commentId },
         data: {
             likedBy: {
-                disconnect: { id: userId }
+                disconnect: { id: userId },
             },
-            likes: comment.likes - 1
-        }
-    })
+            likes: comment.likes - 1,
+        },
+    });
 
     res.status(200).send({ status: 'success', message: 'Like removed successfully' });
 
-})
+});
 
 // WIP(work in progress)
-app.get('createReview', (req, res) => {
-    res.send('created');
+// need to double-check
+app.post('review/course/:courseId', bearerAuthMiddleware, aclMiddleware('STUDENT'), async (req, res) => {
+    const userId = req.user.id;
+    const courseId = Number(req.params.courseId);
+    const { text, rating } = req.body;
 
+    const review = await prisma.review.create({
+        data: {
+            rating: Number(rating),
+            text,
+            courseId,
+            studentId: userId,
+        },
+    });
+
+    res.status(201).send(review);
 });
 
 // =================================================== 
@@ -310,117 +323,96 @@ app.get('createReview', (req, res) => {
 // check his rate over all courses
 
 // not completed
-app.get('/instructor/course', async (req, res) => {
-
-    // its not a real token, its the user id, but I will assume its a token for authorization purpose
-    const basicHeaderParts = req.headers.authorization.split(' ');
-    const token = basicHeaderParts[1];
-    const user = await prisma.user.findUnique({
-        where: { id: token },
-    });
-    if (user.role !== 'INSTRUCTOR') {
-        res.status(401).send('Unauthorized');
-    }
-    // =================================================
+// need to double-check
+app.get('/instructor/course', bearerAuthMiddleware, aclMiddleware('INSTRUCTOR'), async (req, res) => {
+    const userId = req.user.id;
 
     const course = await prisma.course.findMany({
-        where: { instructorId: user.id },
+        where: { instructorId: userId },
     });
 
     res.send(course);
 });
 
-// not completed
-app.post('/instructor/Course', async (req, res) => {
-    // its not a real token, its the user id, but I will assume its a token for authorization purpose
-    const basicHeaderParts = req.headers.authorization.split(' ');
-    const token = basicHeaderParts[1];
-    const user = await prisma.user.findUnique({
-        where: { id: token },
+// need to double-check
+app.post('/instructor/Course', bearerAuthMiddleware, aclMiddleware('INSTRUCTOR'), async (req, res) => {
+    const userId = req.user.id;
+    const { name, description } = req.body;
+    const course = await prisma.course.create({
+        data: {
+            name,
+            description,
+            instructorId: userId,
+        },
     });
-    if (user.role !== 'INSTRUCTOR') {
-        res.status(401).send('Unauthorized');
-    }
-    // =================================================
-    res.send('create course');
 
+    res.status(201).send(course);
+});
+
+// need to double-check
+app.delete('/instructor/course/:courseId', bearerAuthMiddleware, aclMiddleware('INSTRUCTOR'), async (req, res) => {
+    const { courseId } = req.params;
+    await prisma.course.delete({
+        where: {
+            id: courseId,
+        },
+    });
+    res.status(200).send({ status: 'success', message: 'The course has been deleted successfully' });
 });
 
 // not completed
-app.delete('/instructor/course', async (req, res) => {
-    // its not a real token, its the user id, but I will assume its a token for authorization purpose
-    const basicHeaderParts = req.headers.authorization.split(' ');
-    const token = basicHeaderParts[1];
-    const user = await prisma.user.findUnique({
-        where: { id: token },
+// need to double-check
+app.put('/instructor/course/courseId', bearerAuthMiddleware, aclMiddleware('INSTRUCTOR'), async (req, res) => {
+    const { courseId } = req.params;
+    const { name, description } = req.body;
+    const course = await prisma.course.update({
+        where: { id: courseId },
+        data: {
+            name,
+            description,
+        },
     });
-    if (user.role !== 'INSTRUCTOR') {
-        res.status(401).send('Unauthorized');
-    }
-    // =================================================
-    res.send('delete course');
-});
 
-// not completed
-app.put('/instructor/course', async (req, res) => {
-    // its not a real token, its the user id, but I will assume its a token for authorization purpose
-    const basicHeaderParts = req.headers.authorization.split(' ');
-    const token = basicHeaderParts[1];
-    const user = await prisma.user.findUnique({
-        where: { id: token },
-    });
-    if (user.role !== 'INSTRUCTOR') {
-        res.status(401).send('Unauthorized');
-    }
-    // =================================================
-    res.send('update course');
-
+    res.status(200).send(course);
 });
 // check each course like / comments / review
 
-// not completed
-app.get('/checkLikes', async (req, res) => {
-    // its not a real token, its the user id, but I will assume its a token for authorization purpose
-    const basicHeaderParts = req.headers.authorization.split(' ');
-    const token = basicHeaderParts[1];
-    const user = await prisma.user.findUnique({
-        where: { id: token },
+// need to double-check
+app.get('/instructor/courses/likes', bearerAuthMiddleware, aclMiddleware('INSTRUCTOR'), async (req, res) => {
+    const instructorId = req.user.id;
+
+    const courses = await prisma.course.findMany({
+        where: { instructorId },
+        include: { likedBy: true },
     });
-    if (user.role !== 'INSTRUCTOR') {
-        res.status(401).send('Unauthorized');
-    }
-    // =================================================
 
-    let { id } = req.query;
-    id = Number(id);
-    const course = await prisma.course.findUnique({ where: { id } });
-    // console.log(likesNumbers.likes);
-    // const _ = await prisma.course.update({
-    //     where: { id },
-
-    // });
-    let result = {
+    const courseLikes = courses.map(course => ({
+        courseId: course.id,
         courseName: course.name,
-        likes: course.likes,
-    };
-    res.send(result);
+        likes: course.likedBy.length || course.likes, // Same
+    }));
 
+    res.send(courseLikes);
 });
 
 
 // not completed
-app.get('/instructor/checkComments', async (req, res) => {
-    // its not a real token, its the user id, but I will assume its a token for authorization purpose
-    const basicHeaderParts = req.headers.authorization.split(' ');
-    const token = basicHeaderParts[1];
-    const user = await prisma.user.findUnique({
-        where: { id: token },
+app.get('/instructor/courses/comments', bearerAuthMiddleware, aclMiddleware('INSTRUCTOR'), async (req, res) => {
+    const instructorId = req.user.id;
+
+    const courses = await prisma.course.findMany({
+        where: { instructorId },
+        include: { comments: true }, // Include the comments
     });
-    if (user.role !== 'INSTRUCTOR') {
-        res.status(401).send('Unauthorized');
-    }
-    // =================================================
-    res.send('checkLikes');
+
+    // array of courses
+    const courseComments = courses.map(course => ({
+        courseId: course.id,
+        courseName: course.name,
+        comment: course.comments, // [] array of comments
+    }));
+
+    res.send(courseComments);
 });
 
 // not completed
