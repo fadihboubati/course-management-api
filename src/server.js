@@ -56,6 +56,7 @@ const homeRoute = require('./routes/home.routes');
 const { PrismaClient } = require('@prisma/client');
 const bearerAuthMiddleware = require('./middlewares/bearer-auth.middleware');
 const aclMiddleware = require('./middlewares/acl.middleware');
+const { reviewSchema } = require('./utils/dtoValidationSchemas');
 const prisma = new PrismaClient();
 //  ----- Routes -----  //
 app.use('/', homeRoute);
@@ -235,12 +236,12 @@ app.post('/course/:id/comments', bearerAuthMiddleware, aclMiddleware('STUDENT'),
 
 // completed
 app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDENT'), async (req, res) => {
-    const userId = req.user.id
+    const userId = req.user.id;
     const commentId = Number(req.params.commentId);
 
     const comment = await prisma.comment.findUnique({
         where: { id: commentId },
-        include: { likedBy: true }
+        include: { likedBy: true };
 
     })
 
@@ -301,7 +302,8 @@ app.post('/comment/:commentId/unlike', bearerAuthMiddleware, aclMiddleware('STUD
 app.post('review/course/:courseId', bearerAuthMiddleware, aclMiddleware('STUDENT'), async (req, res) => {
     const userId = req.user.id;
     const courseId = Number(req.params.courseId);
-    const { text, rating } = req.body;
+
+    const { text, rating } = await reviewSchema.validateAsync(req.body);
 
     const review = await prisma.review.create({
         data: {
