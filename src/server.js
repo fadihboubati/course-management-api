@@ -183,30 +183,30 @@ app.post('/courses/:id/like', async (req, res) => {
 
     // user and course Id
     const userId = user.id;
-    const courseId = parseInt(req.params.id)
+    const courseId = parseInt(req.params.id);
 
     // get the target course
     const course = await prisma.course.findUnique({
         where: { id: courseId },
-        include: { likedBy: true }
+        include: { likedBy: true },
     });
 
     // check if the course is already liked by the user
     const alreadyLiked = course.likedBy.some(user => user.id == userId);
     if (alreadyLiked) {
-        res.status(400).send("User Already liked the course");
+        res.status(400).send('User Already liked the course');
     }
 
     const updatedCourse = await prisma.course.update({
         where: { id: courseId },
         data: {
             likedBy: {
-                connect: { id: userId }
+                connect: { id: userId },
                 // disconnect : {id: userId}
             },
-            likes: course.likes + 1
-        }
-    })
+            likes: course.likes + 1,
+        },
+    });
 
 
     res.json(updatedCourse);
@@ -217,7 +217,7 @@ app.post('/course/:id/comments', bearerAuthMiddleware, aclMiddleware('STUDENT'),
 
     const courseId = Number(req.params.id);
     const course = await prisma.course.findUnique({
-        where: { id: courseId }
+        where: { id: courseId },
     });
     const userId = req.user.id;
 
@@ -227,8 +227,8 @@ app.post('/course/:id/comments', bearerAuthMiddleware, aclMiddleware('STUDENT'),
             comment: text,
             courseId: course.id,
             studentId: userId,
-        }
-    })
+        },
+    });
 
     res.json(comment);
 
@@ -241,9 +241,9 @@ app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDEN
 
     const comment = await prisma.comment.findUnique({
         where: { id: commentId },
-        include: { likedBy: true };
+        include: { likedBy: true },
 
-    })
+    });
 
 
     const alreadyLiked = comment.likedBy.some(user => user.id == userId);
@@ -256,11 +256,11 @@ app.post('/comment/:commentId/like', bearerAuthMiddleware, aclMiddleware('STUDEN
         where: { id: commentId },
         data: {
             likedBy: {
-                connect: { id: userId }
+                connect: { id: userId },
             },
-            likes: comment.likes + 1
-        }
-    })
+            likes: comment.likes + 1,
+        },
+    });
 
     res.status(200).send({ status: 'success', message: 'Like added successfully' });
 });
